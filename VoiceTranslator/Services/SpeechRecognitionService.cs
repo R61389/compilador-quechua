@@ -1,14 +1,11 @@
 using System;
 using System.Globalization;
+using System.Linq;
 using System.Speech.Recognition;
 using System.Threading;
 
 namespace CompiladorQuechua.Services
 {
-    /// <summary>
-    /// Servicio de reconocimiento de voz continuo en español boliviano.
-    /// Utiliza System.Speech (Windows SAPI) como motor primario.
-    /// </summary>
     public class SpeechRecognitionService : ISpeechRecognitionService
     {
         private SpeechRecognitionEngine? _engine;
@@ -16,19 +13,12 @@ namespace CompiladorQuechua.Services
         private bool _disposed;
         private readonly SynchronizationContext _syncContext;
 
-        /// <inheritdoc/>
         public event EventHandler<SpeechRecognizedEventArgs>? SpeechRecognized;
-
-        /// <inheritdoc/>
         public event EventHandler<EventArgs>? RecognitionStarted;
-
-        /// <inheritdoc/>
         public event EventHandler<EventArgs>? RecognitionStopped;
 
-        /// <inheritdoc/>
         public bool IsListening => _isListening;
 
-        /// <summary>Inicializa el servicio capturando el contexto de sincronización actual.</summary>
         public SpeechRecognitionService()
         {
             _syncContext = SynchronizationContext.Current ?? new SynchronizationContext();
@@ -36,38 +26,47 @@ namespace CompiladorQuechua.Services
 
         private void InitializeEngine()
         {
-            // Intentar es-BO primero, luego es-ES, luego español neutral
-            CultureInfo culture;
-            try { culture = new CultureInfo("es-BO"); }
-            catch
+            // Obtener todos los reconocedores instalados en Windows
+            var installed = SpeechRecognitionEngine.InstalledRecognizers();
+
+            RecognizerInfo? recognizer = null;
+
+            // Prioridad: es-BO → es-ES → cualquier español → el primero disponible
+            var priorities = new[] { "es-BO", "es-ES", "es-MX", "es-AR", "es-PE", "es-US" };
+            foreach (var lang in priorities)
             {
-                try { culture = new CultureInfo("es-ES"); }
-                catch { culture = new CultureInfo("es"); }
+                recognizer = installed.FirstOrDefault(r =>
+                    r.Culture.Name.Equals(lang, StringComparison.OrdinalIgnoreCase));
+                if (recognizer != null) break;
             }
 
-            _engine = new SpeechRecognitionEngine(culture);
+            // Si no hay español, buscar cualquier español por nombre
+            if (recognizer == null)
+                recognizer = installed.FirstOrDefault(r =>
+                    r.Culture.TwoLetterISOLanguageName.Equals("es", StringComparison.OrdinalIgnoreCase));
 
-            // Gramática de dictado libre para reconocimiento de voz continuo
-            var grammar = new DictationGrammar
+            // Último fallback: usar el reconocedor por defecto del sistema
+            if (recognizer == null)
             {
-                Name = "DictationES",
-                Enabled = true
-            };
-            _engine.LoadGrammar(grammar);
+                // Crear con la cultura del sistema
+                _engine = new SpeechRecognitionEngine(
+                    CultureInfo.CurrentUICulture);
+            }
+            else
+            {
+                _engine = new SpeechRecognitionEngine(recognizer.Culture);
+            }
 
+            var grammar = new DictationGrammar { Name = "Dictado", Enabled = true };
+            _engine.LoadGrammar(grammar);
             _engine.SetInputToDefaultAudioDevice();
             _engine.SpeechRecognized += OnSpeechRecognized;
             _engine.SpeechRecognitionRejected += OnSpeechRejected;
             _engine.RecognizeCompleted += OnRecognizeCompleted;
-
-            // Ajuste para reconocimiento continuo
-            _engine.InitialSilenceTimeout = TimeSpan.Zero;
-            _engine.BabbleTimeout = TimeSpan.Zero;
-            _engine.EndSilenceTimeout = TimeSpan.FromMilliseconds(500);
-            _engine.EndSilenceTimeoutAmbiguous = TimeSpan.FromMilliseconds(500);
+            _engine.EndSilenceTimeout = TimeSpan.FromMilliseconds(600);
+            _engine.EndSilenceTimeoutAmbiguous = TimeSpan.FromMilliseconds(600);
         }
 
-        /// <inheritdoc/>
         public void StartListening()
         {
             if (_isListening) return;
@@ -80,14 +79,23 @@ namespace CompiladorQuechua.Services
             }
             catch (Exception ex)
             {
+                // Mensaje de error amigable con instrucciones para instalar español
+                var installed = SpeechRecognitionEngine.InstalledRecognizers();
+                var list = installed.Count > 0
+                    ? string.Join(", ", installed.Select(r => r.Culture.Name))
+                    : "(ninguno)";
+
                 throw new InvalidOperationException(
-                    $"No se pudo iniciar el reconocimiento de voz. " +
-                    $"Verifique que su micrófono esté conectado y que el idioma español esté instalado en Windows.\n\n" +
-                    $"Detalle: {ex.Message}", ex);
+                    $"No se pudo iniciar el reconocimiento de voz.\n\n" +
+                    $"Reconocedores instalados en tu Windows: {list}\n\n" +
+                    $"Para instalar español:\n" +
+                    $"  Configuración → Hora e idioma → Voz\n" +
+                    $"  → Agregar idioma → Español\n" +
+                    $"  → Instalar 'Reconocimiento de voz'\n\n" +
+                    $"Detalle técnico: {ex.Message}", ex);
             }
         }
 
-        /// <inheritdoc/>
         public void StopListening()
         {
             if (!_isListening) return;
@@ -103,22 +111,17 @@ namespace CompiladorQuechua.Services
             _syncContext.Post(_ => SpeechRecognized?.Invoke(this, args), null);
         }
 
-        private void OnSpeechRejected(object? sender, SpeechRecognitionRejectedEventArgs e)
-        {
-            // Rechazos no críticos — se ignoran silenciosamente
-        }
+        private void OnSpeechRejected(object? sender, SpeechRecognitionRejectedEventArgs e) { }
 
         private void OnRecognizeCompleted(object? sender, RecognizeCompletedEventArgs e)
         {
-            // Reiniciar reconocimiento si aún estamos escuchando y no hubo error ni cancelación
             if (_isListening && !e.Cancelled && e.Error == null)
             {
                 try { _engine?.RecognizeAsync(RecognizeMode.Multiple); }
-                catch { /* El engine puede haber sido dispuesto entre llamadas */ }
+                catch { }
             }
         }
 
-        /// <inheritdoc/>
         public void Dispose()
         {
             if (_disposed) return;

@@ -241,15 +241,23 @@ namespace CompiladorQuechua.Forms
 
         private static string? FindQuechuacExe()
         {
-            // Intentar varios lugares comunes
-            var candidates = new[]
+            // Subir desde el directorio de ejecución hasta encontrar quechuac.exe
+            // Cubre: bin\Debug\net10.0-windows\ → VoiceTranslator\ → raíz del repo
+            var dir = AppDomain.CurrentDomain.BaseDirectory;
+            for (int i = 0; i < 8; i++)
             {
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "quechuac.exe"),
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "quechuac.exe"),
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "quechuac.exe"),
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "quechuac.exe"),
-            };
-            return candidates.FirstOrDefault(File.Exists);
+                var candidate = Path.Combine(dir, "quechuac.exe");
+                if (File.Exists(candidate)) return candidate;
+                var parent = Directory.GetParent(dir)?.FullName;
+                if (parent == null || parent == dir) break;
+                dir = parent;
+            }
+
+            // También buscar en el directorio de trabajo actual
+            var cwd = Path.Combine(Directory.GetCurrentDirectory(), "quechuac.exe");
+            if (File.Exists(cwd)) return cwd;
+
+            return null;
         }
 
         // ----------------------------------------------------------------
