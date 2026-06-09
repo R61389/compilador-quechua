@@ -1,14 +1,20 @@
 using System;
-using System.Globalization;
 using System.Linq;
-using System.Speech.Recognition;
 using System.Threading;
+using System.Threading.Tasks;
+using Windows.Globalization;
+using Windows.Media.SpeechRecognition;
 
 namespace CompiladorQuechua.Services
 {
+    /// <summary>
+    /// Reconocimiento de voz usando la API moderna de Windows (WinRT).
+    /// Usa Windows.Media.SpeechRecognition que sí soporta es-MX instalado
+    /// vía Add-WindowsCapability, a diferencia del antiguo System.Speech (SAPI).
+    /// </summary>
     public class SpeechRecognitionService : ISpeechRecognitionService
     {
-        private SpeechRecognitionEngine? _engine;
+        private SpeechRecognizer? _recognizer;
         private bool _isListening;
         private bool _disposed;
         private readonly SynchronizationContext _syncContext;
@@ -24,102 +30,133 @@ namespace CompiladorQuechua.Services
             _syncContext = SynchronizationContext.Current ?? new SynchronizationContext();
         }
 
-        private void InitializeEngine()
-        {
-            // Obtener todos los reconocedores instalados en Windows
-            var installed = SpeechRecognitionEngine.InstalledRecognizers();
-
-            RecognizerInfo? recognizer = null;
-
-            // Prioridad: es-MX (tiene reconocimiento instalado) → otros español → sistema
-            var priorities = new[] { "es-MX", "es-BO", "es-ES", "es-AR", "es-PE", "es-US" };
-            foreach (var lang in priorities)
-            {
-                recognizer = installed.FirstOrDefault(r =>
-                    r.Culture.Name.Equals(lang, StringComparison.OrdinalIgnoreCase));
-                if (recognizer != null) break;
-            }
-
-            // Si no hay español, buscar cualquier español por nombre
-            if (recognizer == null)
-                recognizer = installed.FirstOrDefault(r =>
-                    r.Culture.TwoLetterISOLanguageName.Equals("es", StringComparison.OrdinalIgnoreCase));
-
-            // Último fallback: usar el reconocedor por defecto del sistema
-            if (recognizer == null)
-            {
-                // Crear con la cultura del sistema
-                _engine = new SpeechRecognitionEngine(
-                    CultureInfo.CurrentUICulture);
-            }
-            else
-            {
-                _engine = new SpeechRecognitionEngine(recognizer.Culture);
-            }
-
-            var grammar = new DictationGrammar { Name = "Dictado", Enabled = true };
-            _engine.LoadGrammar(grammar);
-            _engine.SetInputToDefaultAudioDevice();
-            _engine.SpeechRecognized += OnSpeechRecognized;
-            _engine.SpeechRecognitionRejected += OnSpeechRejected;
-            _engine.RecognizeCompleted += OnRecognizeCompleted;
-            _engine.EndSilenceTimeout = TimeSpan.FromMilliseconds(600);
-            _engine.EndSilenceTimeoutAmbiguous = TimeSpan.FromMilliseconds(600);
-        }
-
         public void StartListening()
         {
             if (_isListening) return;
-            try
+            // Lanzar en un hilo separado para no bloquear la UI
+            Task.Run(async () =>
             {
-                if (_engine == null) InitializeEngine();
-                _engine!.RecognizeAsync(RecognizeMode.Multiple);
-                _isListening = true;
-                _syncContext.Post(_ => RecognitionStarted?.Invoke(this, EventArgs.Empty), null);
-            }
-            catch (Exception ex)
-            {
-                // Mensaje de error amigable con instrucciones para instalar español
-                var installed = SpeechRecognitionEngine.InstalledRecognizers();
-                var list = installed.Count > 0
-                    ? string.Join(", ", installed.Select(r => r.Culture.Name))
-                    : "(ninguno)";
+                try
+                {
+                    await InitializeAndStartAsync();
+                }
+                catch (Exception ex)
+                {
+                    _syncContext.Post(_ =>
+                    {
+                        throw new InvalidOperationException(BuildErrorMessage(ex), ex);
+                    }, null);
+                }
+            });
+        }
 
+        private async Task InitializeAndStartAsync()
+        {
+            // Elegir idioma: es-MX primero, luego cualquier español
+            var language = ChooseLanguage();
+
+            _recognizer = new SpeechRecognizer(language);
+
+            // Gramática de dictado libre
+            var dictation = new SpeechRecognitionTopicConstraint(
+                SpeechRecognitionScenario.Dictation, "dictation");
+            _recognizer.Constraints.Add(dictation);
+
+            var compileResult = await _recognizer.CompileConstraintsAsync();
+            if (compileResult.Status != SpeechRecognitionResultStatus.Success)
                 throw new InvalidOperationException(
-                    $"No se pudo iniciar el reconocimiento de voz.\n\n" +
-                    $"Reconocedores instalados en tu Windows: {list}\n\n" +
-                    $"Para instalar español:\n" +
-                    $"  Configuración → Hora e idioma → Voz\n" +
-                    $"  → Agregar idioma → Español\n" +
-                    $"  → Instalar 'Reconocimiento de voz'\n\n" +
-                    $"Detalle técnico: {ex.Message}", ex);
-            }
+                    $"No se pudo compilar la gramática: {compileResult.Status}");
+
+            // Suscribir al evento de resultado continuo
+            _recognizer.ContinuousRecognitionSession.ResultGenerated += OnResultGenerated;
+            _recognizer.ContinuousRecognitionSession.Completed      += OnSessionCompleted;
+
+            await _recognizer.ContinuousRecognitionSession.StartAsync();
+
+            _isListening = true;
+            _syncContext.Post(_ => RecognitionStarted?.Invoke(this, EventArgs.Empty), null);
         }
 
         public void StopListening()
         {
             if (!_isListening) return;
-            _engine?.RecognizeAsyncStop();
             _isListening = false;
-            _syncContext.Post(_ => RecognitionStopped?.Invoke(this, EventArgs.Empty), null);
-        }
-
-        private void OnSpeechRecognized(object? sender, System.Speech.Recognition.SpeechRecognizedEventArgs e)
-        {
-            if (e.Result == null || string.IsNullOrWhiteSpace(e.Result.Text)) return;
-            var args = new SpeechRecognizedEventArgs(e.Result.Text, e.Result.Confidence);
-            _syncContext.Post(_ => SpeechRecognized?.Invoke(this, args), null);
-        }
-
-        private void OnSpeechRejected(object? sender, SpeechRecognitionRejectedEventArgs e) { }
-
-        private void OnRecognizeCompleted(object? sender, RecognizeCompletedEventArgs e)
-        {
-            if (_isListening && !e.Cancelled && e.Error == null)
+            Task.Run(async () =>
             {
-                try { _engine?.RecognizeAsync(RecognizeMode.Multiple); }
-                catch { }
+                try
+                {
+                    if (_recognizer != null)
+                        await _recognizer.ContinuousRecognitionSession.StopAsync();
+                }
+                catch { /* ignorar errores al detener */ }
+                _syncContext.Post(_ => RecognitionStopped?.Invoke(this, EventArgs.Empty), null);
+            });
+        }
+
+        private void OnResultGenerated(
+            SpeechContinuousRecognitionSession sender,
+            SpeechContinuousRecognitionResultGeneratedEventArgs args)
+        {
+            var text = args.Result?.Text;
+            if (string.IsNullOrWhiteSpace(text)) return;
+
+            var confidence = args.Result!.RawConfidence;
+            var evtArgs = new SpeechRecognizedEventArgs(text, (float)confidence);
+            _syncContext.Post(_ => SpeechRecognized?.Invoke(this, evtArgs), null);
+        }
+
+        private void OnSessionCompleted(
+            SpeechContinuousRecognitionSession sender,
+            SpeechContinuousRecognitionCompletedEventArgs args)
+        {
+            // Reiniciar si la sesión terminó inesperadamente y aún estamos escuchando
+            if (_isListening && args.Status != SpeechRecognitionResultStatus.Success)
+            {
+                Task.Run(async () =>
+                {
+                    await Task.Delay(500);
+                    if (_isListening && _recognizer != null)
+                    {
+                        try
+                        {
+                            await _recognizer.ContinuousRecognitionSession.StartAsync();
+                        }
+                        catch { /* si falla, detenerse limpiamente */ }
+                    }
+                });
             }
+        }
+
+        private static Language ChooseLanguage()
+        {
+            // Prioridad: es-MX → es-ES → es-BO → cualquier español
+            var candidates = new[] { "es-MX", "es-ES", "es-BO", "es-AR", "es-US", "es" };
+            var available  = SpeechRecognizer.SupportedTopicLanguages;
+
+            foreach (var tag in candidates)
+            {
+                var match = available.FirstOrDefault(l =>
+                    l.LanguageTag.Equals(tag, StringComparison.OrdinalIgnoreCase));
+                if (match != null) return match;
+            }
+
+            // Fallback: primer idioma disponible
+            return available.FirstOrDefault() ?? new Language("es-MX");
+        }
+
+        private static string BuildErrorMessage(Exception ex)
+        {
+            var available = SpeechRecognizer.SupportedTopicLanguages;
+            var list = available.Count > 0
+                ? string.Join(", ", available.Select(l => l.LanguageTag))
+                : "(ninguno)";
+
+            return $"No se pudo iniciar el reconocimiento de voz.\n\n" +
+                   $"Idiomas disponibles en la API moderna: {list}\n\n" +
+                   $"Si la lista está vacía, ejecuta en PowerShell (administrador):\n" +
+                   $"  Add-WindowsCapability -Online -Name \"Language.Speech~~~es-MX~0.0.1.0\"\n" +
+                   $"Luego reinicia el PC.\n\n" +
+                   $"Detalle: {ex.Message}";
         }
 
         public void Dispose()
@@ -127,8 +164,8 @@ namespace CompiladorQuechua.Services
             if (_disposed) return;
             _disposed = true;
             StopListening();
-            _engine?.Dispose();
-            _engine = null;
+            _recognizer?.Dispose();
+            _recognizer = null;
             GC.SuppressFinalize(this);
         }
     }

@@ -1,14 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0-windows</TargetFramework>
+    <!-- Windows 10.0.19041 = versión mínima para Windows.Media.SpeechRecognition (WinRT) -->
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>CompiladorQuechua</AssemblyName>
     <RootNamespace>CompiladorQuechua</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Permite usar APIs de WinRT en WinForms -->
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
+    <!-- System.Speech se mantiene como fallback -->
     <PackageReference Include="System.Speech" Version="8.0.0" />
     <PackageReference Include="iTextSharp" Version="5.5.13.3" />
   </ItemGroup>
