@@ -170,14 +170,31 @@ namespace CompiladorQuechua.Forms
         private void BuildVoiceTab()
         {
             _tabVoice.BackColor = System.Drawing.Color.FromArgb(37, 37, 38);
-            _tabVoice.Padding = new System.Windows.Forms.Padding(12);
 
-            // Mic status bar
+            // Layout principal: filas fijas para cada sección
+            var table = new System.Windows.Forms.TableLayoutPanel();
+            table.Dock = System.Windows.Forms.DockStyle.Fill;
+            table.ColumnCount = 1;
+            table.RowCount = 6;
+            table.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(
+                System.Windows.Forms.SizeType.Percent, 100f));
+            table.RowStyles.Add(new System.Windows.Forms.RowStyle(
+                System.Windows.Forms.SizeType.Absolute, 48f));   // 0: mic status
+            table.RowStyles.Add(new System.Windows.Forms.RowStyle(
+                System.Windows.Forms.SizeType.Percent, 50f));    // 1: español
+            table.RowStyles.Add(new System.Windows.Forms.RowStyle(
+                System.Windows.Forms.SizeType.Percent, 50f));    // 2: quechua
+            table.RowStyles.Add(new System.Windows.Forms.RowStyle(
+                System.Windows.Forms.SizeType.Absolute, 24f));   // 3: confianza
+            table.RowStyles.Add(new System.Windows.Forms.RowStyle(
+                System.Windows.Forms.SizeType.Absolute, 48f));   // 4: input manual
+            table.RowStyles.Add(new System.Windows.Forms.RowStyle(
+                System.Windows.Forms.SizeType.Absolute, 58f));   // 5: botones
+
+            // --- Fila 0: estado micrófono ---
             _pnlMicStatus = new System.Windows.Forms.Panel();
-            _pnlMicStatus.Dock = System.Windows.Forms.DockStyle.Top;
-            _pnlMicStatus.Height = 48;
+            _pnlMicStatus.Dock = System.Windows.Forms.DockStyle.Fill;
             _pnlMicStatus.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
-            _pnlMicStatus.Padding = new System.Windows.Forms.Padding(8, 0, 8, 0);
 
             _pnlMicIndicator = new System.Windows.Forms.Panel();
             _pnlMicIndicator.Size = new System.Drawing.Size(18, 18);
@@ -187,17 +204,24 @@ namespace CompiladorQuechua.Forms
             _lblMicStatus = new System.Windows.Forms.Label();
             _lblMicStatus.Text = "MICRÓFONO: INACTIVO";
             _lblMicStatus.ForeColor = System.Drawing.Color.FromArgb(220, 53, 69);
-            _lblMicStatus.Font = new System.Drawing.Font("Segoe UI", 11f, System.Drawing.FontStyle.Bold);
+            _lblMicStatus.Font = new System.Drawing.Font("Segoe UI", 11f,
+                System.Drawing.FontStyle.Bold);
             _lblMicStatus.AutoSize = true;
             _lblMicStatus.Location = new System.Drawing.Point(40, 13);
 
             _pnlMicStatus.Controls.Add(_pnlMicIndicator);
             _pnlMicStatus.Controls.Add(_lblMicStatus);
+            table.Controls.Add(_pnlMicStatus, 0, 0);
 
-            // Spanish display
+            // --- Fila 1: español reconocido ---
+            var pnlSpanish = new System.Windows.Forms.Panel();
+            pnlSpanish.Dock = System.Windows.Forms.DockStyle.Fill;
+            pnlSpanish.BackColor = System.Drawing.Color.FromArgb(28, 28, 28);
+            pnlSpanish.Padding = new System.Windows.Forms.Padding(6, 4, 6, 4);
+
             var lblSpanishHeader = MakeLabel("ESPAÑOL  (reconocido):", true);
             lblSpanishHeader.Dock = System.Windows.Forms.DockStyle.Top;
-            lblSpanishHeader.Height = 28;
+            lblSpanishHeader.Height = 26;
             lblSpanishHeader.ForeColor = System.Drawing.Color.FromArgb(0, 122, 204);
 
             _rtbSpanish = new System.Windows.Forms.RichTextBox();
@@ -205,22 +229,22 @@ namespace CompiladorQuechua.Forms
             _rtbSpanish.ReadOnly = true;
             _rtbSpanish.BackColor = System.Drawing.Color.FromArgb(28, 28, 28);
             _rtbSpanish.ForeColor = System.Drawing.Color.White;
-            _rtbSpanish.Font = new System.Drawing.Font("Segoe UI", 16f);
+            _rtbSpanish.Font = new System.Drawing.Font("Segoe UI", 15f);
             _rtbSpanish.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            _rtbSpanish.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
 
-            var pnlSpanish = new System.Windows.Forms.Panel();
-            pnlSpanish.Dock = System.Windows.Forms.DockStyle.Top;
-            pnlSpanish.Height = 130;
-            pnlSpanish.BackColor = System.Drawing.Color.FromArgb(28, 28, 28);
-            pnlSpanish.Padding = new System.Windows.Forms.Padding(8);
             pnlSpanish.Controls.Add(_rtbSpanish);
             pnlSpanish.Controls.Add(lblSpanishHeader);
+            table.Controls.Add(pnlSpanish, 0, 1);
 
-            // Quechua display
+            // --- Fila 2: quechua traducido ---
+            var pnlQuechua = new System.Windows.Forms.Panel();
+            pnlQuechua.Dock = System.Windows.Forms.DockStyle.Fill;
+            pnlQuechua.BackColor = System.Drawing.Color.FromArgb(20, 35, 20);
+            pnlQuechua.Padding = new System.Windows.Forms.Padding(6, 4, 6, 4);
+
             var lblQuechuaHeader = MakeLabel("QUECHUA BOLIVIANO  (traducción):", true);
             lblQuechuaHeader.Dock = System.Windows.Forms.DockStyle.Top;
-            lblQuechuaHeader.Height = 28;
+            lblQuechuaHeader.Height = 26;
             lblQuechuaHeader.ForeColor = System.Drawing.Color.FromArgb(0, 177, 106);
 
             _rtbQuechua = new System.Windows.Forms.RichTextBox();
@@ -228,68 +252,48 @@ namespace CompiladorQuechua.Forms
             _rtbQuechua.ReadOnly = true;
             _rtbQuechua.BackColor = System.Drawing.Color.FromArgb(20, 35, 20);
             _rtbQuechua.ForeColor = System.Drawing.Color.FromArgb(0, 230, 130);
-            _rtbQuechua.Font = new System.Drawing.Font("Segoe UI", 16f, System.Drawing.FontStyle.Bold);
+            _rtbQuechua.Font = new System.Drawing.Font("Segoe UI", 15f,
+                System.Drawing.FontStyle.Bold);
             _rtbQuechua.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            _rtbQuechua.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
 
-            var pnlQuechua = new System.Windows.Forms.Panel();
-            pnlQuechua.Dock = System.Windows.Forms.DockStyle.Top;
-            pnlQuechua.Height = 130;
-            pnlQuechua.BackColor = System.Drawing.Color.FromArgb(20, 35, 20);
-            pnlQuechua.Padding = new System.Windows.Forms.Padding(8);
             pnlQuechua.Controls.Add(_rtbQuechua);
             pnlQuechua.Controls.Add(lblQuechuaHeader);
+            table.Controls.Add(pnlQuechua, 0, 2);
 
-            // Confidence bar
+            // --- Fila 3: confianza ---
             _lblConfidence = MakeLabel("Confianza del reconocimiento: —", false);
-            _lblConfidence.Dock = System.Windows.Forms.DockStyle.Top;
-            _lblConfidence.Height = 24;
+            _lblConfidence.Dock = System.Windows.Forms.DockStyle.Fill;
             _lblConfidence.ForeColor = System.Drawing.Color.FromArgb(150, 150, 150);
+            _lblConfidence.Padding = new System.Windows.Forms.Padding(6, 2, 0, 0);
+            table.Controls.Add(_lblConfidence, 0, 3);
 
-            // Buttons
-            var pnlButtons = new System.Windows.Forms.Panel();
-            pnlButtons.Dock = System.Windows.Forms.DockStyle.Bottom;
-            pnlButtons.Height = 54;
-            pnlButtons.BackColor = System.Drawing.Color.FromArgb(37, 37, 38);
-            pnlButtons.Padding = new System.Windows.Forms.Padding(4);
+            // --- Fila 4: cuadro de texto manual ---
+            var pnlManual = new System.Windows.Forms.Panel();
+            pnlManual.Dock = System.Windows.Forms.DockStyle.Fill;
+            pnlManual.BackColor = System.Drawing.Color.FromArgb(37, 37, 38);
+            pnlManual.Padding = new System.Windows.Forms.Padding(6, 4, 6, 4);
 
-            _btnStartVoice = MakeButton("🎤  Iniciar Traducción en Vivo", System.Drawing.Color.FromArgb(0, 177, 106));
-            _btnStartVoice.Size = new System.Drawing.Size(240, 40);
-            _btnStartVoice.Location = new System.Drawing.Point(8, 8);
-            _btnStartVoice.Click += BtnStartVoice_Click;
-
-            _btnStopVoice = MakeButton("⏹  Detener Traducción", System.Drawing.Color.FromArgb(220, 53, 69));
-            _btnStopVoice.Size = new System.Drawing.Size(220, 40);
-            _btnStopVoice.Location = new System.Drawing.Point(260, 8);
-            _btnStopVoice.Enabled = false;
-            _btnStopVoice.Click += BtnStopVoice_Click;
-
-            _btnTranslateText = MakeButton("💬  Traducir texto manualmente", System.Drawing.Color.FromArgb(80, 80, 180));
-            _btnTranslateText.Size = new System.Drawing.Size(240, 40);
-            _btnTranslateText.Location = new System.Drawing.Point(494, 8);
-            _btnTranslateText.Click += BtnTranslateText_Click;
-
-            pnlButtons.Controls.Add(_btnStartVoice);
-            pnlButtons.Controls.Add(_btnStopVoice);
-            pnlButtons.Controls.Add(_btnTranslateText);
-
-            // Manual text input
             _txtManualInput = new System.Windows.Forms.TextBox();
-            _txtManualInput.Dock = System.Windows.Forms.DockStyle.Bottom;
-            _txtManualInput.Height = 32;
-            _txtManualInput.BackColor = System.Drawing.Color.FromArgb(50, 50, 50);
+            _txtManualInput.Dock = System.Windows.Forms.DockStyle.Fill;
+            _txtManualInput.BackColor = System.Drawing.Color.FromArgb(60, 60, 65);
             _txtManualInput.ForeColor = System.Drawing.Color.White;
             _txtManualInput.Font = new System.Drawing.Font("Segoe UI", 10f);
             _txtManualInput.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            _txtManualInput.PlaceholderText = "Escribe texto en español para traducir manualmente…";
+            _txtManualInput.PlaceholderText = "Escribe aquí en español y presiona Enter para traducir…";
+            _txtManualInput.TabStop = true;
+            _txtManualInput.TabIndex = 0;
             _txtManualInput.KeyPress += TxtManualInput_KeyPress;
 
-            _tabVoice.Controls.Add(pnlQuechua);
-            _tabVoice.Controls.Add(_lblConfidence);
-            _tabVoice.Controls.Add(pnlSpanish);
-            _tabVoice.Controls.Add(_pnlMicStatus);
-            _tabVoice.Controls.Add(pnlButtons);
-            _tabVoice.Controls.Add(_txtManualInput);
+            pnlManual.Controls.Add(_txtManualInput);
+            table.Controls.Add(pnlManual, 0, 4);
+
+            // --- Fila 5: botones ---
+            var pnlButtons = new System.Windows.Forms.Panel();
+            pnlButtons.Dock = System.Windows.Forms.DockStyle.Fill;
+            pnlButtons.BackColor = System.Drawing.Color.FromArgb(37, 37, 38);
+            pnlButtons.Padding = new System.Windows.Forms.Padding(4, 6, 4, 6);
+
+            _tabVoice.Controls.Add(table);
         }
 
         private void BuildHistoryTab()
