@@ -1,0 +1,10 @@
+qallariy main()
+
+yupay inti = 90
+yupay killa = 30
+yupay quyllur = inti + killa
+
+rimay "Resultado:"
+rimay quyllur
+
+kutiy 0
