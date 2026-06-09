@@ -5,7 +5,6 @@
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>CompiladorQuechua</AssemblyName>
     <RootNamespace>CompiladorQuechua</RootNamespace>
-    <ApplicationIcon>Resources\quechua.ico</ApplicationIcon>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
