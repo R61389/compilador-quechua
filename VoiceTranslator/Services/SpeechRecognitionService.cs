@@ -31,8 +31,8 @@ namespace CompiladorQuechua.Services
 
             RecognizerInfo? recognizer = null;
 
-            // Prioridad: es-BO → es-ES → cualquier español → el primero disponible
-            var priorities = new[] { "es-BO", "es-ES", "es-MX", "es-AR", "es-PE", "es-US" };
+            // Prioridad: es-MX (tiene reconocimiento instalado) → otros español → sistema
+            var priorities = new[] { "es-MX", "es-BO", "es-ES", "es-AR", "es-PE", "es-US" };
             foreach (var lang in priorities)
             {
                 recognizer = installed.FirstOrDefault(r =>
