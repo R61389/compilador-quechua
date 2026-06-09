@@ -26,7 +26,7 @@ namespace CompiladorQuechua.Controllers
         public event EventHandler<EventArgs>? ListeningStopped;
 
         /// <summary>Se dispara cuando ocurre un error en el pipeline.</summary>
-        public event EventHandler<ErrorEventArgs>? ErrorOccurred;
+        public event EventHandler<VoiceErrorEventArgs>? ErrorOccurred;
 
         /// <summary>Indica si el micrófono está activo.</summary>
         public bool IsListening => _speechService.IsListening;
@@ -58,7 +58,7 @@ namespace CompiladorQuechua.Controllers
         public void StartListening()
         {
             try { _speechService.StartListening(); }
-            catch (Exception ex) { ErrorOccurred?.Invoke(this, new ErrorEventArgs(ex)); }
+            catch (Exception ex) { ErrorOccurred?.Invoke(this, new VoiceErrorEventArgs(ex)); }
         }
 
         /// <summary>Detiene la escucha del micrófono.</summary>
@@ -78,7 +78,7 @@ namespace CompiladorQuechua.Controllers
             }
             catch (Exception ex)
             {
-                ErrorOccurred?.Invoke(this, new ErrorEventArgs(ex));
+                ErrorOccurred?.Invoke(this, new VoiceErrorEventArgs(ex));
             }
         }
 
@@ -103,12 +103,12 @@ namespace CompiladorQuechua.Controllers
     }
 
     /// <summary>Argumentos del evento ErrorOccurred.</summary>
-    public class ErrorEventArgs : EventArgs
+    public class VoiceVoiceErrorEventArgs : EventArgs
     {
         /// <summary>Excepción que causó el error.</summary>
         public Exception Exception { get; }
 
         /// <summary>Crea los argumentos con la excepción.</summary>
-        public ErrorEventArgs(Exception ex) => Exception = ex;
+        public VoiceVoiceErrorEventArgs(Exception ex) => Exception = ex;
     }
 }

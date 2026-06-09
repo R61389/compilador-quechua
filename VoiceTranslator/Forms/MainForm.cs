@@ -99,7 +99,7 @@ namespace CompiladorQuechua.Forms
             _statusLabel.Text = "Traducción detenida.";
         }
 
-        private void Controller_ErrorOccurred(object? sender, ErrorEventArgs e)
+        private void Controller_ErrorOccurred(object? sender, VoiceErrorEventArgs e)
         {
             _pulseTimer.Stop();
             SetMicStatus(active: false);
