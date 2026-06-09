@@ -343,41 +343,51 @@ namespace CompiladorQuechua.Forms
         {
             _tabAbout.BackColor = System.Drawing.Color.FromArgb(37, 37, 38);
 
+            // Panel superior: info general
             var rtbAbout = new System.Windows.Forms.RichTextBox();
-            rtbAbout.Dock = System.Windows.Forms.DockStyle.Fill;
+            rtbAbout.Dock = System.Windows.Forms.DockStyle.Top;
+            rtbAbout.Height = 280;
             rtbAbout.ReadOnly = true;
             rtbAbout.BackColor = System.Drawing.Color.FromArgb(37, 37, 38);
             rtbAbout.ForeColor = System.Drawing.Color.FromArgb(210, 210, 210);
-            rtbAbout.Font = new System.Drawing.Font("Segoe UI", 11f);
+            rtbAbout.Font = new System.Drawing.Font("Segoe UI", 10.5f);
             rtbAbout.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            rtbAbout.Padding = new System.Windows.Forms.Padding(20);
             rtbAbout.Text =
-                "Compilador Quechua Boliviano\r\n" +
-                "Módulo de Traducción de Voz en Tiempo Real\r\n\r\n" +
-                "Este software combina un compilador de lenguaje de programación Quechua\r\n" +
-                "con un módulo de traducción de voz español→quechua boliviano en tiempo real.\r\n\r\n" +
-                "Componentes:\r\n" +
-                "  • Compilador Quechua (C/NASM): lexer, parser, AST, IR, optimizador, codegen\r\n" +
-                "  • Motor gramatical Quechua Boliviano (Qhichwa sureño)\r\n" +
-                "  • Reconocimiento de voz continuo en español (Windows SAPI)\r\n" +
-                "  • Interfaz gráfica Windows Forms (.NET 6)\r\n\r\n" +
-                "Idioma destino: Quechua Boliviano (Qhichwa)\r\n" +
-                "  Variante: Quechua sureño (Bolivia, Argentina, Perú meridional)\r\n" +
-                "  Incluye terminología de la región: Cochabamba, Oruro, Potosí, La Paz\r\n\r\n" +
+                "Compilador Quechua Boliviano — Módulo de Traducción de Voz\r\n" +
+                new string('─', 60) + "\r\n\r\n" +
+                "Integración con el compilador:\r\n" +
+                "  El motor de traducción lee src/lexer.c y src/parser.c de tu\r\n" +
+                "  compilador quechua al iniciarse, extrayendo:\r\n" +
+                "    • Tabla KEYWORDS[] → vocabulario base quechua\r\n" +
+                "    • match_kw2/peek_kw2 → frases de 2 palabras (mana chayqa, etc.)\r\n" +
+                "  Sobre ese vocabulario construye el mapa español→quechua.\r\n\r\n" +
                 "Reconocimiento de voz:\r\n" +
-                "  Motor: Windows Speech API (SAPI 5)\r\n" +
-                "  Idioma primario: es-BO (español boliviano)\r\n" +
-                "  Fallback: es-ES, es (neutro)\r\n" +
-                "  Modo: dictado continuo (DictationGrammar)\r\n\r\n" +
-                "Exportación de historial:\r\n" +
-                "  • TXT: archivo de texto plano\r\n" +
-                "  • PDF: documento formateado (iTextSharp)\r\n\r\n" +
-                "Compilador CLI:\r\n" +
-                "  Ejecutable: quechuac.exe\r\n" +
-                "  Genera código ensamblador x86 (NASM/MASM)\r\n" +
-                "  Build: make / compilar.bat\r\n\r\n" +
+                "  Motor: Windows SAPI 5 | Idioma: es-BO → es-ES → es\r\n" +
+                "  Modo: dictado continuo | Latencia: < 500 ms\r\n\r\n" +
+                "Exportación: TXT · PDF (iTextSharp)\r\n" +
                 "Versión: 1.0.0  |  .NET 6.0-windows  |  Windows Forms\r\n";
 
+            // Panel inferior: vocabulario extraído del compilador (cargado dinámicamente)
+            var lblVocab = new System.Windows.Forms.Label();
+            lblVocab.Text = "Vocabulario cargado desde tu compilador (src/lexer.c + src/parser.c):";
+            lblVocab.ForeColor = System.Drawing.Color.FromArgb(0, 177, 106);
+            lblVocab.Font = new System.Drawing.Font("Segoe UI", 10f, System.Drawing.FontStyle.Bold);
+            lblVocab.Dock = System.Windows.Forms.DockStyle.Top;
+            lblVocab.Height = 28;
+            lblVocab.Padding = new System.Windows.Forms.Padding(8, 4, 0, 0);
+
+            var rtbVocab = new System.Windows.Forms.RichTextBox();
+            rtbVocab.Dock = System.Windows.Forms.DockStyle.Fill;
+            rtbVocab.ReadOnly = true;
+            rtbVocab.BackColor = System.Drawing.Color.FromArgb(30, 30, 30);
+            rtbVocab.ForeColor = System.Drawing.Color.FromArgb(156, 220, 254);
+            rtbVocab.Font = new System.Drawing.Font("Cascadia Code", 9.5f);
+            rtbVocab.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            // El texto se carga en MainForm_Load para tener acceso a _grammarEngine
+            rtbVocab.Name = "rtbCompilerVocab";
+
+            _tabAbout.Controls.Add(rtbVocab);
+            _tabAbout.Controls.Add(lblVocab);
             _tabAbout.Controls.Add(rtbAbout);
         }
 

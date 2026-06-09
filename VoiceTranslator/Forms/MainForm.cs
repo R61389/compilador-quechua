@@ -19,6 +19,7 @@ namespace CompiladorQuechua.Forms
     public partial class MainForm : Form
     {
         private readonly VoiceTranslationController _controller;
+        private readonly QuechuaGrammarEngine _grammarEngine;
         private bool _pulseState = false;
 
         /// <summary>Crea la forma principal inicializando todos los servicios.</summary>
@@ -26,8 +27,11 @@ namespace CompiladorQuechua.Forms
         {
             InitializeComponent();
 
-            // Composición del árbol de dependencias (poor-man's DI)
-            IQuechuaGrammarEngine grammarEngine = new QuechuaGrammarEngine();
+            // Composición del árbol de dependencias.
+            // QuechuaGrammarEngine lee src/lexer.c y src/parser.c del compilador
+            // para construir su diccionario desde la fuente autoritativa.
+            _grammarEngine = new QuechuaGrammarEngine();
+            IQuechuaGrammarEngine grammarEngine = _grammarEngine;
             ITranslationService translationService = new TranslationService(grammarEngine);
             ISpeechRecognitionService speechService = new SpeechRecognitionService();
 
@@ -39,7 +43,18 @@ namespace CompiladorQuechua.Forms
             _controller.ErrorOccurred        += Controller_ErrorOccurred;
 
             this.FormClosing += MainForm_FormClosing;
+            this.Load        += MainForm_Load;
         }
+
+        private void MainForm_Load(object? sender, EventArgs e)
+        {
+            // Poblar el panel de vocabulario con los keywords reales del compilador
+            var rtbVocab = Controls.Find("rtbCompilerVocab", searchAllChildren: true)
+                                   .FirstOrDefault() as System.Windows.Forms.RichTextBox;
+            if (rtbVocab != null)
+                rtbVocab.Text = _grammarEngine.GetCompilerVocabSummary();
+        }
+
 
         // ----------------------------------------------------------------
         // Controller event handlers
@@ -128,9 +143,8 @@ namespace CompiladorQuechua.Forms
             var text = _txtManualInput.Text.Trim();
             if (string.IsNullOrWhiteSpace(text)) return;
 
-            // Reutilizar el servicio directamente (sin micrófono)
-            IQuechuaGrammarEngine engine = new QuechuaGrammarEngine();
-            ITranslationService svc = new TranslationService(engine);
+            // Reutilizar el motor del compilador (misma instancia que la voz)
+            ITranslationService svc = new TranslationService(_grammarEngine);
             var entry = svc.Translate(text);
             entry.ConfidenceScore = 1.0;
 
