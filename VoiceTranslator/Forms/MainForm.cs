@@ -256,7 +256,7 @@ namespace CompiladorQuechua.Forms
                     return;
                 }
 
-                var psi = new ProcessStartInfo(exePath, $"\"{srcFile}\"")
+                var psi = new ProcessStartInfo(exePath, $"-v \"{srcFile}\"")
                 {
                     RedirectStandardOutput = true,
                     RedirectStandardError  = true,
