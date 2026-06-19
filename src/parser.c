@@ -383,6 +383,12 @@ static ASTNode *parse_stmt(Parser *p) {
         return NULL;
     }
 
+    /* tukukun al nivel raiz cierra qallariy main() */
+    if (keyword_is(p, "tukukun")) {
+        p->pos++;
+        return NULL;
+    }
+
     syn_err(p, 5, "sentencia no reconocida");
     p->pos++;
     return NULL;

@@ -240,7 +240,7 @@ namespace CompiladorQuechua.Forms
             {
                 var tmpDir = Path.GetTempPath();
                 var srcFile = Path.Combine(tmpDir, "quechua_temp.qch");
-                File.WriteAllText(srcFile, code, Encoding.UTF8);
+                File.WriteAllText(srcFile, code, new System.Text.UTF8Encoding(false));
 
                 // Buscar quechuac.exe en el directorio de la aplicación o en el repo
                 var exePath = FindQuechuacExe();
