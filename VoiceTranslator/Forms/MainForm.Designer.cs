@@ -183,13 +183,7 @@ namespace CompiladorQuechua.Forms
             _rtbCompilerInput.BorderStyle = System.Windows.Forms.BorderStyle.None;
             _rtbCompilerInput.Text      =
                 "qallariy main()\r\n" +
-                "    yupay inti = 90\r\n" +
-                "    rimay \"allin p'unchay!\"\r\n" +
-                "    sichus (inti aswan hatun 50)\r\n" +
-                "        rimay \"hatunmi\"\r\n" +
-                "    mana chayqa\r\n" +
-                "        rimay \"pisimi\"\r\n" +
-                "    tukukun\r\n" +
+                "    rimay \"Allin p'unchay, Pacha!\"\r\n" +
                 "    kutiy 0\r\n" +
                 "tukukun\r\n";
 
