@@ -296,7 +296,8 @@ namespace CompiladorQuechua.Services
         private static bool IsAssignment(string line, out string? name, out string? expr)
         {
             var eq = line.IndexOf('=');
-            if (eq > 0 && !line.Contains(' ', 0, eq) && eq < line.Length - 1
+            var spaceIdx = line.IndexOf(' ');
+            if (eq > 0 && (spaceIdx < 0 || spaceIdx > eq) && eq < line.Length - 1
                 && line[eq - 1] != '!' && line[eq - 1] != '<' && line[eq - 1] != '>')
             {
                 name = line[..eq].Trim();
