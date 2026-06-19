@@ -277,6 +277,20 @@ namespace CompiladorQuechua.Forms
                 proc.WaitForExit();
 
                 var sb = new StringBuilder();
+
+                // ── Resultado de ejecución (intérprete propio) ──
+                var interpreter = new CompiladorQuechua.Services.QuechuaInterpreter();
+                var resultado = interpreter.Run(code);
+                sb.AppendLine("╔══════════════════════════════════╗");
+                sb.AppendLine("║   RESULTADO DE EJECUCIÓN         ║");
+                sb.AppendLine("╚══════════════════════════════════╝");
+                if (string.IsNullOrWhiteSpace(resultado))
+                    sb.AppendLine("(sin salida)");
+                else
+                    sb.Append(resultado);
+                sb.AppendLine();
+
+                // ── Salida del compilador ──
                 sb.AppendLine($"=== Compilación ===  código de salida: {proc.ExitCode}");
                 sb.AppendLine();
                 if (!string.IsNullOrWhiteSpace(stdout)) sb.AppendLine(stdout);
