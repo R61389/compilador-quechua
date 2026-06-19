@@ -2,7 +2,7 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <!-- Windows 10.0.19041 = versión mínima para Windows.Media.SpeechRecognition (WinRT) -->
-    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>CompiladorQuechua</AssemblyName>
     <RootNamespace>CompiladorQuechua</RootNamespace>
