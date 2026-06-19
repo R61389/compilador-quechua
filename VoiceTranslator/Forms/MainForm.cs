@@ -168,6 +168,56 @@ namespace CompiladorQuechua.Forms
         // Compiler tab
         // ----------------------------------------------------------------
 
+        private void CmbExamples_SelectedIndexChanged(object? sender, EventArgs e)
+        {
+            _rtbCompilerInput.Text = _cmbExamples.SelectedIndex switch
+            {
+                0 =>
+                    "qallariy main()\r\n" +
+                    "    rimay \"Allin p'unchay, Pacha!\"\r\n" +
+                    "    kutiy 0\r\n" +
+                    "tukukun\r\n",
+                1 =>
+                    "qallariy main()\r\n" +
+                    "    yupay a = 10\r\n" +
+                    "    yupay b = 25\r\n" +
+                    "    yupay c = a + b\r\n" +
+                    "    rimay \"Suma:\"\r\n" +
+                    "    rimay c\r\n" +
+                    "    kutiy 0\r\n" +
+                    "tukukun\r\n",
+                2 =>
+                    "qallariy main()\r\n" +
+                    "    yupay edad = 18\r\n" +
+                    "    sichus (edad aswan hatun 17)\r\n" +
+                    "        rimay \"Eres mayor de edad\"\r\n" +
+                    "    mana chayqa\r\n" +
+                    "        rimay \"Eres menor de edad\"\r\n" +
+                    "    tukukun\r\n" +
+                    "    kutiy 0\r\n" +
+                    "tukukun\r\n",
+                3 =>
+                    "qallariy main()\r\n" +
+                    "    yupay i = 1\r\n" +
+                    "    mientras (i pisiy aswan 6)\r\n" +
+                    "        rimay i\r\n" +
+                    "        i = i + 1\r\n" +
+                    "    tukukun\r\n" +
+                    "    kutiy 0\r\n" +
+                    "tukukun\r\n",
+                4 =>
+                    "qallariy main()\r\n" +
+                    "    yupay x = 40\r\n" +
+                    "    yupay y = 60\r\n" +
+                    "    yupay suma = x + y\r\n" +
+                    "    rimay \"Resultado:\"\r\n" +
+                    "    rimay suma\r\n" +
+                    "    kutiy 0\r\n" +
+                    "tukukun\r\n",
+                _ => _rtbCompilerInput.Text
+            };
+        }
+
         private void BtnCompile_Click(object? sender, EventArgs e)
         {
             var code = _rtbCompilerInput.Text;

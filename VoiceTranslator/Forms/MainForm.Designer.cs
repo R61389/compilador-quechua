@@ -141,6 +141,40 @@ namespace CompiladorQuechua.Forms
             lblInput.Dock     = System.Windows.Forms.DockStyle.Top;
             lblInput.Height   = 30;
 
+            // Examples toolbar
+            var pnlExamples         = new System.Windows.Forms.Panel();
+            pnlExamples.Dock        = System.Windows.Forms.DockStyle.Top;
+            pnlExamples.Height      = 36;
+            pnlExamples.BackColor   = C_CARD;
+            pnlExamples.Padding     = new System.Windows.Forms.Padding(4, 4, 4, 0);
+
+            var lblEx               = new System.Windows.Forms.Label();
+            lblEx.Text              = "Ejemplo:";
+            lblEx.ForeColor         = C_TEXT_DIM;
+            lblEx.Font              = new System.Drawing.Font("Segoe UI", 9f);
+            lblEx.AutoSize          = true;
+            lblEx.Location          = new System.Drawing.Point(4, 8);
+
+            _cmbExamples            = new System.Windows.Forms.ComboBox();
+            _cmbExamples.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            _cmbExamples.BackColor  = C_SURFACE;
+            _cmbExamples.ForeColor  = C_TEXT;
+            _cmbExamples.Font       = new System.Drawing.Font("Segoe UI", 9f);
+            _cmbExamples.Width      = 280;
+            _cmbExamples.Location   = new System.Drawing.Point(65, 5);
+            _cmbExamples.Items.AddRange(new object[]
+            {
+                "1. Hola mundo",
+                "2. Variables y operaciones",
+                "3. Condición (si/sino)",
+                "4. Bucle mientras",
+                "5. Suma de dos números"
+            });
+            _cmbExamples.SelectedIndexChanged += CmbExamples_SelectedIndexChanged;
+
+            pnlExamples.Controls.Add(_cmbExamples);
+            pnlExamples.Controls.Add(lblEx);
+
             _rtbCompilerInput           = new System.Windows.Forms.RichTextBox();
             _rtbCompilerInput.Dock      = System.Windows.Forms.DockStyle.Fill;
             _rtbCompilerInput.BackColor = C_SURFACE;
@@ -164,6 +198,7 @@ namespace CompiladorQuechua.Forms
             pnlInput.BackColor = C_SURFACE;
             pnlInput.Padding   = new System.Windows.Forms.Padding(4);
             pnlInput.Controls.Add(_rtbCompilerInput);
+            pnlInput.Controls.Add(pnlExamples);
             pnlInput.Controls.Add(lblInput);
             split.Panel1.Controls.Add(pnlInput);
             split.Panel1.BackColor = C_SURFACE;
@@ -543,6 +578,7 @@ namespace CompiladorQuechua.Forms
 
         // Compiler tab
         private System.Windows.Forms.RichTextBox _rtbCompilerInput  = null!;
+        private System.Windows.Forms.ComboBox   _cmbExamples       = null!;
         private System.Windows.Forms.RichTextBox _rtbCompilerOutput = null!;
         private System.Windows.Forms.Button      _btnCompile        = null!;
 
